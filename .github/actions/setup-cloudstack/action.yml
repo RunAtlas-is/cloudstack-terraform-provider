@@ -21,6 +21,9 @@ inputs:
   cloudstack-version:
     description: 'Cloudstack version'
     required: true
+  cloudstack-image:
+    description: 'Digest-pinned Cloudstack simulator image'
+    required: true
 outputs:
   CLOUDSTACK_USER_ID:
     description: 'Cloudstack user id'
@@ -68,7 +71,12 @@ runs:
           python /root/tools/marvin/marvin/deployDataCenter.py -i /root/setup/dev/advanced.cfg
 
         # Get the container ID of the running simulator
-        CONTAINER_ID=$(docker container ls --format=json -l | jq -r .ID)
+        mapfile -t CONTAINER_IDS < <(docker ps --filter "ancestor=${{ inputs.cloudstack-image }}" --format "{{.ID}}")
+        if [ "${#CONTAINER_IDS[@]}" -ne 1 ]; then
+          echo "Expected one Cloudstack simulator container, found ${#CONTAINER_IDS[@]}"
+          exit 1
+        fi
+        CONTAINER_ID=${CONTAINER_IDS[0]}
 
         # Install CloudMonkey
         docker exec $CONTAINER_ID bash -c "curl -sfSL https://github.com/apache/cloudstack-cloudmonkey/releases/download/6.4.0/cmk.linux.x86-64 -o /usr/local/bin/cmk && chmod +x /usr/local/bin/cmk"

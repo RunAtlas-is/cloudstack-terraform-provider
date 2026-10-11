@@ -64,6 +64,7 @@ jobs:
         id: setup-cloudstack
         with:
           cloudstack-version: ${{ matrix.cloudstack.version }}
+          cloudstack-image: ${{ matrix.cloudstack.image }}
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ matrix.terraform-version }}
@@ -103,6 +104,7 @@ jobs:
         id: setup-cloudstack
         with:
           cloudstack-version: ${{ matrix.cloudstack.version }}
+          cloudstack-image: ${{ matrix.cloudstack.image }}
       - uses: opentofu/setup-opentofu@000eeb8522f0572907c393e8151076c205fdba1b # v1.0.6
         with:
           tofu_version: ${{ matrix.opentofu-version }}
