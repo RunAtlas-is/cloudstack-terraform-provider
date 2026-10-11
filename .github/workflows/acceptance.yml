@@ -59,7 +59,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
-      - name: Configure Cloudstack v${{ matrix.cloudstack-version }}
+      - name: Configure Cloudstack v${{ matrix.cloudstack.version }}
         uses: ./.github/actions/setup-cloudstack
         id: setup-cloudstack
         with:
@@ -98,7 +98,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
-      - name: Configure Cloudstack v${{ matrix.cloudstack-version }}
+      - name: Configure Cloudstack v${{ matrix.cloudstack.version }}
         uses: ./.github/actions/setup-cloudstack
         id: setup-cloudstack
         with:
