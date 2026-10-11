@@ -68,7 +68,7 @@ runs:
           python /root/tools/marvin/marvin/deployDataCenter.py -i /root/setup/dev/advanced.cfg
 
         # Get the container ID of the running simulator
-        CONTAINER_ID=$(docker ps --filter "ancestor=apache/cloudstack-simulator:${{ matrix.cloudstack-version }}" --format "{{.ID}}" | head -n1)
+        CONTAINER_ID=$(docker container ls --format=json -l | jq -r .ID)
 
         # Install CloudMonkey
         docker exec $CONTAINER_ID bash -c "curl -sfSL https://github.com/apache/cloudstack-cloudmonkey/releases/download/6.4.0/cmk.linux.x86-64 -o /usr/local/bin/cmk && chmod +x /usr/local/bin/cmk"

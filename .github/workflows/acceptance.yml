@@ -30,7 +30,6 @@ permissions:
 
 env:
   CLOUDSTACK_API_URL: http://localhost:8080/client/api
-  CLOUDSTACK_VERSIONS: "['4.19.0.1', '4.19.1.3', '4.19.2.0', '4.19.3.0', '4.20.1.0']"
 
 jobs:
   prepare-matrix:
@@ -41,10 +40,17 @@ jobs:
       - name: Set versions
         id: set-versions
         run: |
-          echo "cloudstack-versions=${{ env.CLOUDSTACK_VERSIONS }}" >> $GITHUB_OUTPUT
+          versions='[
+            {"version":"4.19.0.1","image":"apache/cloudstack-simulator:4.19.0.1@sha256:b14027713c9ff0aa2b573340279295042c4e53921d1974d47cc2d6358edce7f0"},
+            {"version":"4.19.1.3","image":"apache/cloudstack-simulator:4.19.1.3@sha256:0cb21acadb6b584a168160393db50db6b75c9976a6f2ece3d518dae93a3dcfaa"},
+            {"version":"4.19.2.0","image":"apache/cloudstack-simulator:4.19.2.0@sha256:f5d6971008dd34df1d131cf0c441ab1633e9876b1113a79b0dcf8fd3ce5fc5d3"},
+            {"version":"4.19.3.0","image":"apache/cloudstack-simulator:4.19.3.0@sha256:41afbe0b0a97dda8001200cba11871c61b9c8070f6ae0c6c71005218eca4cbd5"},
+            {"version":"4.20.1.0","image":"apache/cloudstack-simulator:4.20.1.0@sha256:35f7e6ba9dc37eb0248cb5e344208f971b3c935d193fd2b5447f0067905973f3"}
+          ]'
+          echo "cloudstack-versions=$(jq -c <<< "$versions")" >> "$GITHUB_OUTPUT"
 
   acceptance-terraform:
-    name: Terraform ${{ matrix.terraform-version }} with Cloudstack ${{ matrix.cloudstack-version }}
+    name: Terraform ${{ matrix.terraform-version }} with Cloudstack ${{ matrix.cloudstack.version }}
     needs: [prepare-matrix]
     runs-on: ubuntu-latest
     steps:
@@ -57,7 +63,7 @@ jobs:
         uses: ./.github/actions/setup-cloudstack
         id: setup-cloudstack
         with:
-          cloudstack-version: ${{ matrix.cloudstack-version }}
+          cloudstack-version: ${{ matrix.cloudstack.version }}
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ matrix.terraform-version }}
@@ -71,7 +77,7 @@ jobs:
           make testacc
     services:
       cloudstack-simulator:
-        image: apache/cloudstack-simulator:${{ matrix.cloudstack-version }}
+        image: ${{ matrix.cloudstack.image }}
         ports:
           - 8080:5050
     strategy:
@@ -80,10 +86,10 @@ jobs:
         terraform-version:
           - '1.11.*'
           - '1.12.*'
-        cloudstack-version: ${{ fromJson(needs.prepare-matrix.outputs.cloudstack-versions) }}
+        cloudstack: ${{ fromJson(needs.prepare-matrix.outputs.cloudstack-versions) }}
 
   acceptance-opentofu:
-    name: OpenTofu ${{ matrix.opentofu-version }} with Cloudstack ${{ matrix.cloudstack-version }}
+    name: OpenTofu ${{ matrix.opentofu-version }} with Cloudstack ${{ matrix.cloudstack.version }}
     needs: [prepare-matrix]
     runs-on: ubuntu-latest
     steps:
@@ -96,7 +102,7 @@ jobs:
         uses: ./.github/actions/setup-cloudstack
         id: setup-cloudstack
         with:
-          cloudstack-version: ${{ matrix.cloudstack-version }}
+          cloudstack-version: ${{ matrix.cloudstack.version }}
       - uses: opentofu/setup-opentofu@000eeb8522f0572907c393e8151076c205fdba1b # v1.0.6
         with:
           tofu_version: ${{ matrix.opentofu-version }}
@@ -109,7 +115,7 @@ jobs:
           make testacc
     services:
       cloudstack-simulator:
-        image: apache/cloudstack-simulator:${{ matrix.cloudstack-version }}
+        image: ${{ matrix.cloudstack.image }}
         ports:
           - 8080:5050
     strategy:
@@ -118,7 +124,7 @@ jobs:
         opentofu-version:
           - '1.8.*'
           - '1.9.*'
-        cloudstack-version: ${{ fromJson(needs.prepare-matrix.outputs.cloudstack-versions) }}
+        cloudstack: ${{ fromJson(needs.prepare-matrix.outputs.cloudstack-versions) }}
 
   all-jobs-passed: # Will succeed if it is skipped
     runs-on: ubuntu-latest
